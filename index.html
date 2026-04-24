@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRier | Secure Transfer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .drag-over { border-color: #22c55e !important; background-color: #064e3b !important; }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col items-center justify-center p-6">
+
+    <div class="max-w-md w-full bg-zinc-900 border border-green-500 rounded-xl p-8 shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+        <h1 class="text-3xl font-bold text-green-500 mb-2 text-center tracking-tighter">QRier_</h1>
+        <p class="text-zinc-400 text-sm text-center mb-8">Secure, Ephemeral, No-Login Transfer</p>
+
+        <div class="flex flex-col items-center space-y-4 mb-8">
+            <img src="data:image/png;base64,{{ qr }}" class="w-48 h-48 border-4 border-white rounded-lg">
+            <div class="grid grid-cols-2 gap-4 w-full">
+                <div class="bg-black p-3 border border-zinc-700 rounded">
+                    <span class="text-xs text-green-500 block">CODE</span>
+                    <span class="font-mono text-xl">{{ code }}</span>
+                </div>
+                <div class="bg-black p-3 border border-zinc-700 rounded">
+                    <span class="text-xs text-green-500 block">PASSWORD</span>
+                    <span class="font-mono text-xl">{{ password }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="drop-zone" class="border-2 border-dashed border-zinc-700 rounded-xl p-10 text-center transition-all cursor-pointer hover:border-green-500">
+            <p id="status-text" class="text-zinc-400">Drag & Drop file here or <span class="text-green-500">Click</span></p>
+            <input type="file" id="file-input" class="hidden">
+        </div>
+
+        <div class="mt-6 text-[10px] text-zinc-500 uppercase tracking-widest text-center">
+            Files expire in 5m • Sessions expire in 10m
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const statusText = document.getElementById('status-text');
+
+        dropZone.onclick = () => fileInput.click();
+
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('drag-over');
+
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            handleUpload(e.dataTransfer.files[0]);
+        };
+
+        fileInput.onchange = (e) => handleUpload(e.target.files[0]);
+
+        async function handleUpload(file) {
+            if (!file) return;
+            statusText.innerText = "Uploading: " + file.name;
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('password', '{{ password }}');
+
+            const response = await fetch('/upload/{{ code }}', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                statusText.innerHTML = "✅ <span class='text-green-500'>Upload Complete!</span>";
+            } else {
+                statusText.innerText = "❌ Upload Failed";
+            }
+        }
+    </script>
+</body>
+</html>
