@@ -54,12 +54,16 @@ async def home(request: Request):
     # Start 10-minute countdown to delete session if no file is exchanged
     asyncio.create_task(cleanup_task(session_id, 600, "session"))
     
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "code": session_id,
-        "password": password,
-        "qr": qr_code
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "request": request,
+            "code": session_id,
+            "password": password,
+            "qr": qr_code
+        }
+    )
 
 @app.post("/upload/{session_id}")
 async def upload_file(session_id: str, file: UploadFile = File(...), password: str = Form(...)):
